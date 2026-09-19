@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CPU Cooling Fan CFD | Portfolio</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -189,12 +193,30 @@
       </div>
       <details>
         <summary>Formulas & method</summary>
-        <div class="db">
-          <div class="eq">ω = 2π · RPM / 60 = 157.08 rad/s</div>
-          <div class="eq">v<sub>tip</sub> = ω · r = 9.11 m/s (r = 58 mm)</div>
-          <div class="eq">Q ≈ A · v<sub>tip</sub> · η = 0.0481 m³/s (η = 0.50)</div>
-          <div class="eq">Re = ρ · v<sub>tip</sub> · r / μ = 35,763</div>
-          <p style="margin-top:.5rem">First-order theoretical baseline for comparison with CFD. Not a substitute for numerical analysis.</p>
+        <div class="db" style="line-height:1.8;">
+          <div style="text-align:center; margin:1rem 0;">
+            $$\omega = \dfrac{2\pi \cdot RPM}{60}$$
+          </div>
+          <p>ω = 157.08 rad/s</p>
+
+          <div style="text-align:center; margin:1.2rem 0;">
+            $$v_{tip} = \omega \cdot r$$
+          </div>
+          <p>v<sub>tip</sub> = 9.11 m/s &nbsp;(r = 58 mm)</p>
+
+          <div style="text-align:center; margin:1.2rem 0;">
+            $$Q \approx A \cdot v_{tip} \cdot \eta$$
+          </div>
+          <p>Q ≈ 0.04814 m³/s &nbsp;(A = 0.01057 m², η = 0.50)</p>
+
+          <div style="text-align:center; margin:1.2rem 0;">
+            $$Re = \dfrac{\rho \cdot v_{tip} \cdot r}{\mu}$$
+          </div>
+          <p>Re = 35,763</p>
+
+          <p style="margin-top:1rem; color:var(--muted); font-size:0.82rem;">
+            First-order theoretical baseline for comparison with CFD. Not a substitute for numerical analysis.
+          </p>
         </div>
       </details>
     </div>
