@@ -203,6 +203,11 @@
     footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
+
+    @media (max-width: 700px) {
+      .fan-showcase { grid-template-columns: 1fr !important; }
+    }
+
     .fade-in { opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
     .fade-in.visible { opacity: 1; transform: translateY(0); }
   </style>
@@ -225,7 +230,7 @@
   <header class="hero">
     <div class="container">
       <div class="badge">Mechanical Engineering Project</div>
-      <h1>CFD Analysis of a<br /><span>5-Blade Axial Exhaust Fan</span></h1>
+      <h1>CFD Analysis of a<br /><span>High-Performance Exhaust Fan</span></h1>
       <p class="hero-sub">
         Design → Predict → Verify workflow. Theoretical hand calculation benchmarked against
         full CFD (COMSOL Multiphysics) on the actual CAD geometry.
@@ -251,8 +256,15 @@
         through theoretical prediction to CFD validation.
       </p>
 
-      <div class="fan-showcase fade-in">
-        <img src="fan_render.png" alt="3D CAD model of the 5-blade axial exhaust fan" />
+      <div class="fan-showcase fade-in" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; max-width:820px; margin:1.75rem auto;">
+        <div>
+          <img src="fan_render.png" alt="Fan design — view 1" style="width:100%; border-radius:14px; border:1px solid var(--border); box-shadow:0 20px 50px rgba(0,0,0,0.4);" />
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">View 1 — Front / isometric</p>
+        </div>
+        <div>
+          <img src="fan_render_2.png" alt="Fan design — view 2" style="width:100%; border-radius:14px; border:1px solid var(--border); box-shadow:0 20px 50px rgba(0,0,0,0.4);" />
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">View 2 — Rear / hub detail</p>
+        </div>
       </div>
 
       <div class="specs fade-in">
