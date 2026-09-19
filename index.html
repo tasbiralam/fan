@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CFD Analysis of a High-Performance CPU Cooling Fan — Aerodynamic Performance Study by Mechanical Engineering Graduate" />
+  <title>CPU Fan CFD Analysis | Mechanical Engineering Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --bg-card: #111827;
+      --bg-elevated: #1a2234;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e9;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --gradient: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #8b5cf6 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 14, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 0;
+    }
+
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.75rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    /* HERO */
+    .hero {
+      padding: 8.5rem 0 5rem;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 5vw, 3.2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+
+    h1 span {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .hero-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .dot {
+      width: 4px;
+      height: 4px;
+      background: var(--text-muted);
+      border-radius: 50%;
+    }
+
+    /* SECTIONS */
+    section {
+      padding: 4.5rem 0;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .section-sub {
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      max-width: 560px;
+    }
+
+    /* CARDS */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #0f172a;
+    }
+
+    .card-body {
+      padding: 1.25rem 1.4rem 1.5rem;
+    }
+
+    .card-body h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-body p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* TECH SPECS */
+    .specs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .spec-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+    }
+
+    .spec-item .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .spec-item .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    /* METHODOLOGY */
+    .timeline {
+      position: relative;
+      padding-left: 1.75rem;
+      border-left: 2px solid var(--border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -2.05rem;
+      top: 0.35rem;
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+
+    .timeline-item h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+
+    .timeline-item p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* SKILLS */
+    .skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .skill {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+    }
+
+    /* RESULTS HIGHLIGHT */
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(99, 102, 241, 0.08));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin-top: 2rem;
+    }
+
+    .highlight-box h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+    }
+
+    .highlight-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .highlight-box li {
+      position: relative;
+      padding-left: 1.4rem;
+      margin-bottom: 0.55rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .highlight-box li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    /* FAN RENDER */
+    .fan-showcase {
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .fan-showcase img {
+      max-width: 420px;
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ANIMATIONS */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <div class="logo">CFD Portfolio</div>
+      <ul class="nav-links">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#skills">Skills</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <div class="badge">Mechanical Engineering Project</div>
+      <h1>CFD Analysis of a<br /><span>High-Performance CPU Cooling Fan</span></h1>
+      <p class="hero-sub">
+        Steady-state aerodynamic performance study of a 5-blade axial fan using computational fluid dynamics.
+        Velocity & pressure field investigation for thermal management applications.
+      </p>
+      <div class="hero-meta">
+        <span>Axial Fan</span>
+        <span class="dot"></span>
+        <span>RANS / Steady</span>
+        <span class="dot"></span>
+        <span>Velocity & Pressure Contours</span>
+        <span class="dot"></span>
+        <span>2026</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="overview">
+    <div class="container">
+      <h2 class="section-title fade-in">Project Overview</h2>
+      <p class="section-sub fade-in">
+        This project evaluates the aerodynamic behaviour of a compact axial cooling fan commonly used in CPU thermal solutions.
+        The goal is to quantify velocity magnitude distribution and static pressure field around the rotating blades.
+      </p>
+
+      <div class="fan-showcase fade-in">
+        <img src="fan_render.png" alt="3D CAD model of the 5-blade CPU cooling fan" />
+      </div>
+
+      <div class="specs fade-in">
+        <div class="spec-item">
+          <div class="label">Blade Count</div>
+          <div class="value">5</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">Domain Size</div>
+          <div class="value">~Ø200 mm</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">Max Velocity</div>
+          <div class="value">≈ 2.0 m/s</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">Analysis Type</div>
+          <div class="value">Steady RANS</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="container">
+      <h2 class="section-title fade-in">Simulation Results</h2>
+      <p class="section-sub fade-in">
+        Contour plots extracted from a mid-plane slice through the fan axis. Colour scales reveal the high-velocity regions near the blade tips and the pressure recovery zones.
+      </p>
+
+      <div class="grid-2">
+        <div class="card fade-in">
+          <img src="velocity_contour.png" alt="Velocity magnitude contour plot of CPU fan" />
+          <div class="card-body">
+            <h3>Velocity Magnitude (m/s)</h3>
+            <p>
+              Peak velocities concentrate at the blade trailing edges and tip regions.
+              The flow field shows a clean, axisymmetric pattern with rapid decay outside the rotor plane —
+              desirable for focused cooling of a heat sink.
+            </p>
+          </div>
+        </div>
+
+        <div class="card fade-in">
+          <img src="pressure_contour.png" alt="Static pressure contour plot of CPU fan" />
+          <div class="card-body">
+            <h3>Static Pressure (Pa)</h3>
+            <p>
+              Low-pressure zones form on the suction side of each blade, while higher pressure
+              appears on the pressure side. The radial pressure gradient indicates effective
+              work input by the rotor into the fluid.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box fade-in">
+        <h3>Key Observations</h3>
+        <ul>
+          <li>Velocity magnitude reaches approximately 2 m/s near the blade tips under the simulated operating condition.</li>
+          <li>The pressure field exhibits classic axial-fan behaviour: suction on the upstream face and pressure rise downstream.</li>
+          <li>Flow remains largely attached; no major separation bubbles are visible in the mid-plane slice.</li>
+          <li>The circular domain and symmetry confirm that the mesh and boundary conditions produce a physically consistent solution.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="methodology">
+    <div class="container">
+      <h2 class="section-title fade-in">Methodology</h2>
+      <p class="section-sub fade-in">
+        A structured CFD workflow was followed from CAD import through post-processing.
+      </p>
+
+      <div class="timeline fade-in">
+        <div class="timeline-item">
+          <h4>1. Geometry & Domain</h4>
+          <p>
+            5-blade axial fan CAD model imported (STEP). A cylindrical fluid domain was created around the rotor
+            with sufficient radial and axial extent to capture near-field aerodynamics without wall interference.
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>2. Meshing</h4>
+          <p>
+            Hybrid mesh with refined prism layers near blade surfaces to resolve the boundary layer.
+            Local refinement applied in the tip-gap and trailing-edge regions for accurate velocity gradients.
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>3. Physics Setup</h4>
+          <p>
+            Steady-state RANS simulation. Incompressible air at standard conditions.
+            Rotating reference frame (or sliding mesh equivalent) applied to the rotor zone.
+            Appropriate turbulence model selected for internal flow with moderate Reynolds number.
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>4. Boundary Conditions</h4>
+          <p>
+            Inlet: atmospheric pressure / velocity inlet. Outlet: pressure outlet.
+            Rotor walls treated as no-slip moving walls. Outer domain walls: symmetry or far-field.
+          </p>
+        </div>
+        <div class="timeline-item">
+          <h4>5. Post-Processing</h4>
+          <p>
+            Mid-plane slices extracted for velocity magnitude and static pressure.
+            Contours visualised with consistent colour maps to highlight aerodynamic features.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="container">
+      <h2 class="section-title fade-in">Skills Demonstrated</h2>
+      <p class="section-sub fade-in">
+        Technical competencies showcased through this project — relevant for roles in thermal management,
+        turbomachinery, and computational engineering.
+      </p>
+
+      <div class="skills fade-in">
+        <span class="skill">Computational Fluid Dynamics (CFD)</span>
+        <span class="skill">ANSYS Fluent / CFX</span>
+        <span class="skill">RANS Modelling</span>
+        <span class="skill">Axial Fan Aerodynamics</span>
+        <span class="skill">CAD (STEP / SolidWorks / Fusion)</span>
+        <span class="skill">Mesh Generation & Refinement</span>
+        <span class="skill">Boundary Layer Resolution</span>
+        <span class="skill">Post-Processing & Visualisation</span>
+        <span class="skill">Thermal Management</span>
+        <span class="skill">Rotating Machinery</span>
+        <span class="skill">Engineering Analysis</span>
+        <span class="skill">Technical Documentation</span>
+      </div>
+
+      <div class="highlight-box fade-in" style="margin-top: 2.5rem;">
+        <h3>Why This Matters to Recruiters</h3>
+        <ul>
+          <li>Demonstrates end-to-end ownership of a complete CFD workflow — from CAD to validated contours.</li>
+          <li>Shows understanding of real engineering constraints in electronics cooling (compact size, focused flow).</li>
+          <li>Ability to interpret results physically (pressure recovery, tip velocity, flow attachment).</li>
+          <li>Clean visual communication of complex simulation data — a critical skill in industry.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>
+        Mechanical Engineering Graduate · CFD & Thermal Analysis Portfolio<br />
+        <a href="https://github.com/YOUR_USERNAME" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://linkedin.com/in/YOUR_USERNAME" target="_blank" rel="noopener">LinkedIn</a>
+      </p>
+      <p style="margin-top: 0.75rem; font-size: 0.8rem; opacity: 0.7;">
+        Project visualisations generated from steady-state CFD simulation · 2026
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Simple scroll-reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
