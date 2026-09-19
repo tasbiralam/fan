@@ -3,440 +3,480 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Exhaust Fan Aerodynamics Calculator</title>
+  <meta name="description" content="CFD-validated axial exhaust fan — Design, Predict, Verify portfolio" />
+  <title>Exhaust Fan CFD Analysis | Mechanical Engineering Portfolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0f1117;
-      --card: #1a1d27;
-      --border: #2a2f3d;
-      --text: #e8eaed;
-      --muted: #9aa0a6;
-      --accent: #4fc3f7;
-      --accent2: #81c784;
-      --warning: #ffb74d;
-      --radius: 12px;
+      --bg: #0a0e17;
+      --bg-card: #111827;
+      --bg-elevated: #1a2234;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e9;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --gradient: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #8b5cf6 100%);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.55;
-      padding: 0 0 4rem;
+      line-height: 1.6;
+      overflow-x: hidden;
     }
-    .container { max-width: 920px; margin: 0 auto; padding: 0 1.25rem; }
-    header { text-align: center; padding: 2.5rem 0 1.5rem; }
-    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
-    header p { color: var(--muted); font-size: 0.95rem; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.35rem 1.5rem;
-      margin-bottom: 1.25rem;
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none; z-index: -1;
     }
-    .card h2 {
-      font-size: 1.1rem; font-weight: 600; margin-bottom: 0.9rem;
-      display: flex; align-items: center; gap: 0.45rem;
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,14,23,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 0.9rem 0;
     }
-    .card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--accent); }
-    .fan-row { margin-bottom: 1.25rem; text-align: center; }
-    .fan-row img {
-      width: 100%; max-width: 380px; border-radius: 10px;
-      border: 1px solid var(--border); background: #1e222d;
+    nav .container { display: flex; justify-content: space-between; align-items: center; }
+    .logo {
+      font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em;
+      background: var(--gradient);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .metrics {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem; margin-bottom: 0.5rem;
+    .nav-links { display: flex; gap: 1.75rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500; transition: color 0.2s;
     }
-    .metric {
-      background: #151820; border: 1px solid var(--border);
-      border-radius: 8px; padding: 0.85rem 0.9rem; text-align: center;
-    }
-    .metric .label {
-      font-size: 0.72rem; text-transform: uppercase;
-      letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.25rem;
-    }
-    .metric .value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.15rem; font-weight: 500; color: var(--accent);
-    }
-    .caption { font-size: 0.8rem; color: var(--muted); margin-top: 0.6rem; }
-    .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    @media (max-width: 640px) {
-      .inputs { grid-template-columns: 1fr; }
-      .metrics { grid-template-columns: 1fr; }
-    }
-    .input-group { margin-bottom: 1.1rem; }
-    .input-group label {
-      display: flex; justify-content: space-between;
-      font-size: 0.85rem; font-weight: 500; margin-bottom: 0.4rem;
-    }
-    .input-group label span {
-      font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 500;
-    }
-    input[type="range"] {
-      width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
-      background: #2a2f3d; border-radius: 3px; outline: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 16px; height: 16px;
-      background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid #0f1117;
-    }
-    input[type="number"] {
-      width: 100%; background: #151820; border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); padding: 0.5rem 0.7rem;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
-    }
-    input[type="number"]:focus { outline: none; border-color: var(--accent); }
-    .results-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem; margin-bottom: 0.9rem;
-    }
-    @media (max-width: 640px) { .results-grid { grid-template-columns: 1fr; } }
-    .result-box {
-      background: #151820; border: 1px solid var(--border);
-      border-radius: 8px; padding: 1rem; text-align: center;
-    }
-    .result-box .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem; }
-    .result-box .value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.25rem; font-weight: 600; color: var(--accent2);
-    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* HERO */
+    .hero { padding: 8.5rem 0 4.5rem; text-align: center; }
     .badge {
-      display: inline-block; background: rgba(79,195,247,0.12);
-      border: 1px solid rgba(79,195,247,0.3); color: var(--accent);
-      font-size: 0.85rem; font-weight: 500; padding: 0.4rem 0.9rem;
-      border-radius: 6px; margin-top: 0.3rem;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25);
+      color: var(--accent); font-size: 0.8rem; font-weight: 500;
+      padding: 0.35rem 0.9rem; border-radius: 999px; margin-bottom: 1.5rem;
     }
-    details {
-      margin-top: 1rem; border: 1px solid var(--border);
-      border-radius: 8px; overflow: hidden;
+    .badge::before {
+      content: ''; width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; animation: pulse 2s infinite;
     }
-    details summary {
-      padding: 0.75rem 1rem; cursor: pointer; font-size: 0.9rem;
-      font-weight: 500; background: #151820; list-style: none;
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3rem); font-weight: 700;
+      letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 1.25rem;
     }
-    details summary::-webkit-details-marker { display: none; }
-    details[open] summary { border-bottom: 1px solid var(--border); }
-    .calc-body { padding: 1rem; font-size: 0.88rem; color: var(--muted); }
-    .calc-body .eq {
-      font-family: 'JetBrains Mono', monospace; color: var(--text); margin: 0.35rem 0;
+    h1 span {
+      background: var(--gradient);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .cfd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    @media (max-width: 700px) { .cfd-grid { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 0.75rem; }
-    th, td { padding: 0.55rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
-    td:last-child { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
-    .info-box {
-      background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.25);
-      border-radius: 8px; padding: 0.9rem 1.1rem; font-size: 0.9rem;
-      margin-top: 1rem; color: var(--text);
+    .hero-sub {
+      font-size: 1.1rem; color: var(--text-muted);
+      max-width: 620px; margin: 0 auto 2rem;
     }
+    .hero-meta {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 1.25rem; font-size: 0.9rem; color: var(--text-muted);
+    }
+    .hero-meta .dot {
+      width: 4px; height: 4px; background: var(--text-muted); border-radius: 50%;
+      align-self: center;
+    }
+
+    section { padding: 4rem 0; }
+    .section-title {
+      font-size: 1.55rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: -0.02em;
+    }
+    .section-sub { color: var(--text-muted); margin-bottom: 2.25rem; max-width: 580px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .card:hover { border-color: rgba(56,189,248,0.35); transform: translateY(-2px); }
+    .card img { width: 100%; height: auto; display: block; background: #0f172a; }
+    .card-body { padding: 1.2rem 1.35rem 1.4rem; }
+    .card-body h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .card-body p { font-size: 0.9rem; color: var(--text-muted); }
+
+    .specs {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem; margin-top: 1.75rem;
+    }
+    .spec-item {
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.05rem 1.2rem;
+    }
+    .spec-item .label {
+      font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.25rem;
+    }
+    .spec-item .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem; font-weight: 500; color: var(--accent);
+    }
+
+    .fan-showcase { text-align: center; margin: 1.75rem 0; }
+    .fan-showcase img {
+      max-width: 380px; width: 100%; border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    /* Workflow steps */
+    .workflow {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 700px) { .workflow { grid-template-columns: 1fr; } }
+    .step {
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.35rem 1.4rem; position: relative;
+    }
+    .step .num {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      color: var(--accent); margin-bottom: 0.4rem;
+    }
+    .step h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .step p { font-size: 0.88rem; color: var(--text-muted); }
+
+    /* Comparison */
+    .compare-table {
+      width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 1rem;
+    }
+    .compare-table th, .compare-table td {
+      padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .compare-table th { color: var(--text-muted); font-weight: 500; font-size: 0.8rem; }
+    .compare-table td:last-child {
+      font-family: 'JetBrains Mono', monospace; color: var(--accent);
+    }
+
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.08));
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: 12px; padding: 1.5rem; margin-top: 1.75rem;
+    }
+    .highlight-box h3 { font-size: 1.05rem; margin-bottom: 0.7rem; color: var(--accent); }
+    .highlight-box ul { list-style: none; padding: 0; }
+    .highlight-box li {
+      position: relative; padding-left: 1.35rem; margin-bottom: 0.5rem;
+      font-size: 0.92rem; color: var(--text-muted);
+    }
+    .highlight-box li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+
     .note-box {
-      background: rgba(255,183,77,0.08); border: 1px solid rgba(255,183,77,0.3);
-      border-radius: 8px; padding: 0.9rem 1.1rem; font-size: 0.85rem;
-      color: var(--muted); margin-top: 1rem;
+      background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 10px; padding: 1rem 1.2rem; margin-top: 1.25rem;
+      font-size: 0.88rem; color: var(--text-muted);
     }
-    .contour-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;
+
+    .skills { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+    .skill {
+      background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2);
+      color: var(--accent); font-size: 0.84rem; font-weight: 500;
+      padding: 0.38rem 0.85rem; border-radius: 6px;
     }
-    @media (max-width: 700px) { .contour-row { grid-template-columns: 1fr; } }
-    .contour-card {
-      background: #151820; border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
-    }
-    .contour-card img {
-      width: 100%; height: 280px; object-fit: contain;
-      background: #fff; display: block;
-    }
-    .contour-card .body { padding: 0.9rem 1rem 1.1rem; }
-    .contour-card .body strong {
-      display: block; font-size: 0.9rem; margin-bottom: 0.35rem; color: var(--text);
-    }
-    .contour-card .body p {
-      font-size: 0.82rem; color: var(--muted); line-height: 1.5;
-    }
-    .science p { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.9rem; }
-    .science strong { color: var(--text); }
+
     footer {
-      text-align: center; padding: 2rem 0 0; font-size: 0.8rem; color: var(--muted);
+      border-top: 1px solid var(--border); padding: 2.25rem 0;
+      text-align: center; color: var(--text-muted); font-size: 0.88rem;
     }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    .fade-in { opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🌀 Exhaust Fan Aerodynamics Calculator</h1>
-      <p>Design → Predict → Verify | CFD-validated axial fan study</p>
-    </header>
-
-    <div class="fan-row">
-      <img src="fan_render.png" alt="5-blade axial exhaust fan CAD model" />
+  <nav>
+    <div class="container">
+      <div class="logo">CFD Portfolio</div>
+      <ul class="nav-links">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#predict">Predict</a></li>
+        <li><a href="#verify">Verify</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#skills">Skills</a></li>
+      </ul>
     </div>
+  </nav>
 
-    <div class="card">
-      <h2>🎯 Project Objective</h2>
-      <p style="font-size:0.92rem; color:var(--muted);">
-        This project follows a <strong style="color:var(--text)">design → predict → verify</strong> workflow:
+  <!-- HERO -->
+  <header class="hero">
+    <div class="container">
+      <div class="badge">Mechanical Engineering Project</div>
+      <h1>CFD Analysis of a<br /><span>5-Blade Axial Exhaust Fan</span></h1>
+      <p class="hero-sub">
+        Design → Predict → Verify workflow. Theoretical hand calculation benchmarked against
+        full CFD (COMSOL Multiphysics) on the actual CAD geometry.
       </p>
-      <ol style="margin:0.75rem 0 0.5rem 1.2rem; font-size:0.9rem; color:var(--muted);">
-        <li><strong style="color:var(--text)">Design</strong> — Modeled a 5-blade axial exhaust fan in CAD.</li>
-        <li><strong style="color:var(--text)">Predict</strong> — Calculated expected airflow theoretically using basic fluid mechanics (this calculator).</li>
-        <li><strong style="color:var(--text)">Verify</strong> — Ran full CFD (COMSOL Multiphysics) on the actual CAD geometry to check the prediction.</li>
-      </ol>
-      <p style="font-size:0.88rem; color:var(--muted); margin-top:0.6rem;">
-        Goal: show that hand-calculation and CFD agree, demonstrating both design and analytical engineering skills.
-      </p>
+      <div class="hero-meta">
+        <span>Axial Fan</span>
+        <span class="dot"></span>
+        <span>RANS / Frozen Rotor</span>
+        <span class="dot"></span>
+        <span>Hand Calc vs CFD</span>
+        <span class="dot"></span>
+        <span>2026</span>
+      </div>
     </div>
+  </header>
 
-    <div class="card">
-      <h2>Geometry (from CAD)</h2>
-      <div class="metrics">
-        <div class="metric">
-          <div class="label">Blade tip diameter</div>
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <div class="container">
+      <h2 class="section-title fade-in">Project Overview</h2>
+      <p class="section-sub fade-in">
+        End-to-end aerodynamic study of a compact axial exhaust fan — from CAD geometry
+        through theoretical prediction to CFD validation.
+      </p>
+
+      <div class="fan-showcase fade-in">
+        <img src="fan_render.png" alt="3D CAD model of the 5-blade axial exhaust fan" />
+      </div>
+
+      <div class="specs fade-in">
+        <div class="spec-item">
+          <div class="label">Blade Tip Diameter</div>
           <div class="value">115.7 mm</div>
         </div>
-        <div class="metric">
-          <div class="label">Hub diameter</div>
+        <div class="spec-item">
+          <div class="label">Hub Diameter</div>
           <div class="value">36.5 mm</div>
         </div>
-        <div class="metric">
-          <div class="label">Blade count</div>
+        <div class="spec-item">
+          <div class="label">Blade Count</div>
           <div class="value">5</div>
         </div>
-      </div>
-      <p class="caption">Measured directly from the CAD model. Adjust parameters below to explore other scenarios.</p>
-    </div>
-
-    <div class="card">
-      <h2>Input Parameters</h2>
-      <div class="inputs">
-        <div>
-          <div class="input-group">
-            <label>RPM (rotation speed) <span id="rpmVal">1500</span></label>
-            <input type="range" id="rpm" min="100" max="5000" value="1500" step="50" />
-          </div>
-          <div class="input-group">
-            <label>Blade tip radius (mm) <span id="radiusVal">58</span></label>
-            <input type="range" id="radius" min="10" max="120" value="58" step="1" />
-          </div>
-          <div class="input-group">
-            <label>Number of blades <span id="bladesVal">5</span></label>
-            <input type="range" id="blades" min="2" max="10" value="5" step="1" />
-          </div>
+        <div class="spec-item">
+          <div class="label">Operating Speed</div>
+          <div class="value">1500 RPM</div>
         </div>
-        <div>
-          <div class="input-group">
-            <label>Air density (kg/m³)</label>
-            <input type="number" id="density" value="1.225" step="0.001" />
-          </div>
-          <div class="input-group">
-            <label>Air dynamic viscosity (Pa·s)</label>
-            <input type="number" id="viscosity" value="0.0000181" step="0.0000001" />
-          </div>
-          <div class="input-group">
-            <label>Rough flow efficiency factor <span id="etaVal">0.50</span></label>
-            <input type="range" id="eta" min="0.1" max="1.0" value="0.5" step="0.05" />
-          </div>
+      </div>
+
+      <div class="workflow fade-in" style="margin-top:2.5rem;">
+        <div class="step">
+          <div class="num">01</div>
+          <h4>Design</h4>
+          <p>5-blade axial exhaust fan modelled in CAD. Geometry extracted for both hand calculation and CFD mesh.</p>
+        </div>
+        <div class="step">
+          <div class="num">02</div>
+          <h4>Predict</h4>
+          <p>Theoretical airflow estimated from tip speed, swept area and a realistic efficiency factor.</p>
+        </div>
+        <div class="step">
+          <div class="num">03</div>
+          <h4>Verify</h4>
+          <p>Full CFD (COMSOL, k-ε, Frozen Rotor) on the real geometry. Hand calculation compared to CFD result.</p>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="card">
-      <h2>Results</h2>
-      <div class="results-grid">
-        <div class="result-box">
+  <!-- PREDICT -->
+  <section id="predict">
+    <div class="container">
+      <h2 class="section-title fade-in">Hand Calculation (Predict)</h2>
+      <p class="section-sub fade-in">
+        Simplified fluid-mechanics estimate used as the theoretical baseline before CFD.
+      </p>
+
+      <div class="specs fade-in">
+        <div class="spec-item">
           <div class="label">Blade Tip Speed</div>
-          <div class="value" id="tipSpeed">9.11 m/s</div>
+          <div class="value">9.11 m/s</div>
         </div>
-        <div class="result-box">
+        <div class="spec-item">
           <div class="label">Estimated Flow Rate</div>
-          <div class="value" id="flowRate">0.0482 m³/s</div>
+          <div class="value">0.0481 m³/s</div>
         </div>
-        <div class="result-box">
+        <div class="spec-item">
           <div class="label">Reynolds Number</div>
-          <div class="value" id="reNum">35,800</div>
+          <div class="value">35,763</div>
         </div>
-      </div>
-      <div class="badge" id="regime">Flow regime: Turbulent</div>
-
-      <details>
-        <summary>See calculation details</summary>
-        <div class="calc-body">
-          <div class="eq">ω = 2π · RPM / 60</div>
-          <div>ω = <span id="omega">157.08</span> rad/s</div>
-          <div class="eq" style="margin-top:0.7rem">v<sub>tip</sub> = ω · r</div>
-          <div>v<sub>tip</sub> = <span id="vtipDetail">9.11</span> m/s</div>
-          <div class="eq" style="margin-top:0.7rem">Q ≈ A · v<sub>tip</sub> · η</div>
-          <div>Q ≈ <span id="qDetail">0.04820</span> m³/s &nbsp;(A = <span id="areaDetail">0.01057</span> m², η = <span id="etaDetail">0.50</span>)</div>
-          <div class="eq" style="margin-top:0.7rem">Re = ρ · v<sub>tip</sub> · r / μ</div>
-          <div>Re = <span id="reDetail">35,800</span></div>
-        </div>
-      </details>
-      <p class="caption" style="margin-top:0.9rem">
-        Simplified theoretical estimates for benchmarking against CFD — not a replacement for full CFD analysis.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>🔬 CFD Validation (COMSOL)</h2>
-      <p style="font-size:0.9rem; color:var(--muted); margin-bottom:1rem;">
-        Theoretical estimate benchmarked against full CFD (COMSOL Multiphysics, Turbulent Flow k-ε, Frozen Rotor) using the actual CAD geometry.
-      </p>
-      <div class="cfd-grid">
-        <div>
-          <h3>CFD Simulation Inputs</h3>
-          <div class="input-group">
-            <label>CFD flow rate — Inlet (m³/s)</label>
-            <input type="number" id="cfdInlet" value="0.038302" step="0.000001" />
-          </div>
-          <div class="input-group">
-            <label>CFD flow rate — Outlet (m³/s)</label>
-            <input type="number" id="cfdOutlet" value="0.039027" step="0.000001" />
-          </div>
-        </div>
-        <div>
-          <h3>Validation Summary</h3>
-          <div class="metrics" style="grid-template-columns:1fr;">
-            <div class="metric">
-              <div class="label">Avg. CFD Flow Rate</div>
-              <div class="value" id="cfdAvg">0.03866 m³/s</div>
-            </div>
-            <div class="metric">
-              <div class="label">Mass Conservation Check</div>
-              <div class="value" id="massErr">1.87% diff</div>
-            </div>
-            <div class="metric">
-              <div class="label">Hand Calc vs CFD</div>
-              <div class="value" id="pctDiff">19.7% diff</div>
-            </div>
-          </div>
+        <div class="spec-item">
+          <div class="label">Flow Regime</div>
+          <div class="value">Turbulent</div>
         </div>
       </div>
 
-      <h3 style="margin-top:1.25rem;">Comparison Table</h3>
-      <table>
-        <thead>
-          <tr><th>Method</th><th>Flow Rate (m³/s)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Hand Calculation (theoretical)</td><td id="tblHand">0.04820</td></tr>
-          <tr><td>CFD — Inlet</td><td id="tblInlet">0.03830</td></tr>
-          <tr><td>CFD — Outlet</td><td id="tblOutlet">0.03903</td></tr>
-          <tr><td>CFD — Average</td><td id="tblAvg">0.03866</td></tr>
-        </tbody>
-      </table>
-
-      <div class="info-box" id="agreeBox">
-        The hand calculation and CFD result agree within <strong>19.7%</strong>.
-        The remaining difference is expected — the hand calculation uses a simplified efficiency factor and assumes uniform flow, while CFD accounts for actual blade geometry, turbulence, and boundary layer effects.
+      <div class="highlight-box fade-in">
+        <h3>Formulas used</h3>
+        <ul>
+          <li>ω = 2π · RPM / 60 &nbsp;→&nbsp; 157.08 rad/s</li>
+          <li>v<sub>tip</sub> = ω · r &nbsp;→&nbsp; 9.11 m/s (r = 58 mm)</li>
+          <li>Q ≈ A · v<sub>tip</sub> · η &nbsp;→&nbsp; 0.0481 m³/s (η = 0.50)</li>
+          <li>Re = ρ · v<sub>tip</sub> · r / μ &nbsp;→&nbsp; 35,763 (turbulent)</li>
+        </ul>
       </div>
     </div>
+  </section>
 
-    <div class="card">
-      <h2>CFD Result Visuals & Interpretation</h2>
-      <div class="contour-row">
-        <div class="contour-card">
+  <!-- VERIFY -->
+  <section id="verify">
+    <div class="container">
+      <h2 class="section-title fade-in">CFD Validation (Verify)</h2>
+      <p class="section-sub fade-in">
+        Steady RANS simulation in COMSOL Multiphysics (Turbulent Flow k-ε, Frozen Rotor approach)
+        on the actual CAD geometry.
+      </p>
+
+      <div class="specs fade-in">
+        <div class="spec-item">
+          <div class="label">CFD Inlet Flow</div>
+          <div class="value">0.03830 m³/s</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">CFD Outlet Flow</div>
+          <div class="value">0.03903 m³/s</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">CFD Average</div>
+          <div class="value">0.03867 m³/s</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">Mass Conservation</div>
+          <div class="value">1.88% diff</div>
+        </div>
+      </div>
+
+      <div class="card fade-in" style="margin-top:2rem; padding:1.4rem 1.5rem;">
+        <h3 style="font-size:1.05rem; margin-bottom:0.75rem;">Comparison Table</h3>
+        <table class="compare-table">
+          <thead>
+            <tr><th>Method</th><th>Flow Rate (m³/s)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Hand Calculation (theoretical)</td><td>0.04814</td></tr>
+            <tr><td>CFD — Inlet boundary</td><td>0.03830</td></tr>
+            <tr><td>CFD — Outlet boundary</td><td>0.03903</td></tr>
+            <tr><td>CFD — Average</td><td>0.03867</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="highlight-box fade-in">
+        <h3>Hand Calculation vs CFD — Analysis</h3>
+        <ul>
+          <li><strong style="color:var(--text)">Difference: 19.7%</strong> — Hand calculation over-predicts flow rate relative to CFD.</li>
+          <li><strong style="color:var(--text)">Similarity:</strong> Both methods show the same order of magnitude (~0.04 m³/s) and confirm turbulent regime at the tip.</li>
+          <li><strong style="color:var(--text)">Why the gap exists:</strong> The hand formula assumes uniform velocity across the entire swept disk and applies a single efficiency factor (η = 0.5). CFD resolves the real blade geometry, tip leakage, hub blockage, boundary layers and non-uniform velocity profile — all of which reduce the net delivered flow.</li>
+          <li><strong style="color:var(--text)">Mass conservation:</strong> Inlet and outlet CFD flows differ by only 1.88%, indicating a well-converged, physically consistent simulation.</li>
+          <li><strong style="color:var(--text)">Engineering takeaway:</strong> A simple analytical estimate is useful for first-order sizing; CFD is required for accurate performance prediction and design refinement.</li>
+        </ul>
+      </div>
+
+      <div class="note-box fade-in">
+        Inlet and Outlet boundaries were set to fixed Pressure = 0 Pa (open atmospheric condition). Domain-average pressure is therefore not a meaningful output; the local pressure difference across each blade is what reflects the fan’s aerodynamic loading.
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS / CONTOURS -->
+  <section id="results">
+    <div class="container">
+      <h2 class="section-title fade-in">CFD Result Visuals</h2>
+      <p class="section-sub fade-in">
+        Mid-plane contour slices extracted from the COMSOL solution.
+      </p>
+
+      <div class="grid-2">
+        <div class="card fade-in">
           <img src="velocity_contour.png" alt="Velocity magnitude contour" />
-          <div class="body">
-            <strong>Highest at the blade tip</strong>
-            <p>Velocity scales directly with radius (v = ω × r), so the tip moves fastest and shows the highest velocity, while the hub and far edge of the domain stay close to zero.</p>
+          <div class="card-body">
+            <h3>Velocity Magnitude (m/s)</h3>
+            <p>
+              <strong style="color:var(--text)">Highest at the blade tip.</strong>
+              Velocity scales with radius (v = ω × r). The tip moves fastest and shows the peak velocity; near the hub and far from the rotor the velocity drops toward zero.
+            </p>
           </div>
         </div>
-        <div class="contour-card">
+        <div class="card fade-in">
           <img src="pressure_contour.png" alt="Pressure distribution contour" />
-          <div class="body">
-            <strong>Differs across each blade face</strong>
-            <p>The pressure side pushes air (higher pressure) while the suction side pulls air along (lower pressure) — this difference generates thrust, the same principle as lift on a wing.</p>
+          <div class="card-body">
+            <h3>Static Pressure (Pa)</h3>
+            <p>
+              <strong style="color:var(--text)">Differs across each blade face.</strong>
+              Pressure side pushes air (higher pressure); suction side pulls air along (lower pressure). This difference generates the thrust — the same principle as lift on a wing.
+            </p>
           </div>
         </div>
       </div>
-      <div class="note-box">
-        Note: the Inlet and Outlet boundaries were set to a fixed Pressure = 0 Pa condition (a modeling choice, not a measured result), so domain-average pressure isn’t meaningful here. The local pressure difference across each blade, shown above, is what reflects the fan’s actual aerodynamic loading.
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="container">
+      <h2 class="section-title fade-in">Skills Demonstrated</h2>
+      <p class="section-sub fade-in">
+        Competencies relevant to thermal management, turbomachinery and computational engineering roles.
+      </p>
+      <div class="skills fade-in">
+        <span class="skill">Computational Fluid Dynamics (CFD)</span>
+        <span class="skill">COMSOL Multiphysics</span>
+        <span class="skill">RANS / k-ε Modelling</span>
+        <span class="skill">Frozen Rotor</span>
+        <span class="skill">Axial Fan Aerodynamics</span>
+        <span class="skill">CAD (STEP)</span>
+        <span class="skill">Hand Calculation / Analytical Estimate</span>
+        <span class="skill">Result Validation</span>
+        <span class="skill">Mesh & Boundary Conditions</span>
+        <span class="skill">Post-Processing</span>
+        <span class="skill">Technical Communication</span>
+      </div>
+
+      <div class="highlight-box fade-in" style="margin-top:2.25rem;">
+        <h3>Why this project impresses recruiters</h3>
+        <ul>
+          <li>Shows the complete engineering loop: Design → analytical prediction → numerical verification.</li>
+          <li>Honest comparison of methods — including quantified difference and physical explanation of the gap.</li>
+          <li>Demonstrates ability to interpret CFD contours physically, not just generate pretty pictures.</li>
+          <li>Clean visual and written communication of complex simulation data.</li>
+        </ul>
       </div>
     </div>
+  </section>
 
-    <div class="card science">
-      <h2>🔍 The Science Behind It</h2>
+  <footer>
+    <div class="container">
       <p>
-        <strong>Why velocity is highest at the blade tip:</strong><br />
-        Since v = ω × r, velocity scales directly with radius. The blade tip (largest r) moves fastest, so it shows the highest velocity in the contour plot. Near the hub (r ≈ 0) and outside the domain, velocity drops close to zero.
+        Mechanical Engineering Graduate · CFD & Thermal Analysis Portfolio<br />
+        <a href="https://github.com/YOUR_USERNAME" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://linkedin.com/in/YOUR_USERNAME" target="_blank" rel="noopener">LinkedIn</a>
       </p>
-      <p>
-        <strong>Why pressure differs across each blade face:</strong><br />
-        Each blade has a pressure side (the face pushing the air — higher pressure) and a suction side (the trailing face pulling air along — lower pressure). This pressure difference across the blade is what generates thrust/airflow, the same principle as lift on an airplane wing.
+      <p style="margin-top:0.6rem; font-size:0.8rem; opacity:0.7;">
+        Design → Predict → Verify · Hand calculation benchmarked against COMSOL CFD · 2026
       </p>
     </div>
-
-    <footer>
-      Mechanical Engineering · Design → Predict → Verify · CFD-validated axial fan study
-    </footer>
-  </div>
+  </footer>
 
   <script>
-    const $ = id => document.getElementById(id);
-    function calc() {
-      const rpm = +$('rpm').value;
-      const radiusMm = +$('radius').value;
-      const eta = +$('eta').value;
-      const density = +$('density').value;
-      const viscosity = +$('viscosity').value;
-
-      $('rpmVal').textContent = rpm;
-      $('radiusVal').textContent = radiusMm;
-      $('bladesVal').textContent = $('blades').value;
-      $('etaVal').textContent = eta.toFixed(2);
-
-      const r = radiusMm / 1000;
-      const omega = (2 * Math.PI * rpm) / 60;
-      const tipSpeed = omega * r;
-      const area = Math.PI * r * r;
-      const flowRate = area * tipSpeed * eta;
-      const re = (density * tipSpeed * r) / viscosity;
-
-      let regime = 'Transitional';
-      if (re > 4000) regime = 'Turbulent';
-      else if (re < 2300) regime = 'Laminar';
-
-      $('tipSpeed').textContent = tipSpeed.toFixed(2) + ' m/s';
-      $('flowRate').textContent = flowRate.toFixed(4) + ' m³/s';
-      $('reNum').textContent = Math.round(re).toLocaleString();
-      $('regime').textContent = 'Flow regime: ' + regime;
-
-      $('omega').textContent = omega.toFixed(2);
-      $('vtipDetail').textContent = tipSpeed.toFixed(2);
-      $('qDetail').textContent = flowRate.toFixed(5);
-      $('areaDetail').textContent = area.toFixed(5);
-      $('etaDetail').textContent = eta.toFixed(2);
-      $('reDetail').textContent = Math.round(re).toLocaleString();
-
-      const cfdIn = Math.abs(+$('cfdInlet').value);
-      const cfdOut = Math.abs(+$('cfdOutlet').value);
-      const cfdAvg = (cfdIn + cfdOut) / 2;
-      const massErr = Math.abs(cfdIn - cfdOut) / cfdAvg * 100;
-      const pctDiff = Math.abs(flowRate - cfdAvg) / flowRate * 100;
-
-      $('cfdAvg').textContent = cfdAvg.toFixed(5) + ' m³/s';
-      $('massErr').textContent = massErr.toFixed(2) + '% diff';
-      $('pctDiff').textContent = pctDiff.toFixed(1) + '% diff';
-
-      $('tblHand').textContent = flowRate.toFixed(5);
-      $('tblInlet').textContent = cfdIn.toFixed(5);
-      $('tblOutlet').textContent = cfdOut.toFixed(5);
-      $('tblAvg').textContent = cfdAvg.toFixed(5);
-
-      $('agreeBox').innerHTML =
-        'The hand calculation and CFD result agree within <strong>' + pctDiff.toFixed(1) + '%</strong>. ' +
-        'The remaining difference is expected — the hand calculation uses a simplified efficiency factor and assumes uniform flow, while CFD accounts for actual blade geometry, turbulence, and boundary layer effects.';
-    }
-    ['rpm','radius','blades','eta','density','viscosity','cfdInlet','cfdOutlet']
-      .forEach(id => $(id).addEventListener('input', calc));
-    calc();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
   </script>
 </body>
 </html>
